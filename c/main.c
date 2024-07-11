@@ -21,12 +21,6 @@ unsigned char *hex_2_string(const unsigned char* hex, const unsigned int length)
   return result;
 }
 
-void set_value(char * ptr, int len) {
-  for (int i=0; i<len; i++) {
-    ptr[i] = 'a';
-  }
-}
-
 #define MAXBLOCKSIZE_PKCS7 128
 
 int pkcs7_pad(char *buff, size_t blocksize, size_t startpoint) {
@@ -70,7 +64,8 @@ int aes_init(unsigned char *key_data, int key_data_len, unsigned char *salt, EVP
              EVP_CIPHER_CTX *d_ctx)
 {
   int i, nrounds = 14;
-  unsigned char key[32], iv[16];
+  unsigned char key[32];
+  unsigned char iv[16] = {'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'};
   
   /*
    * Gen key & IV for AES 256 CBC mode. A SHA1 digest is used to hash the supplied key material.
@@ -84,8 +79,7 @@ int aes_init(unsigned char *key_data, int key_data_len, unsigned char *salt, EVP
     return -1;
   }
 
-  // set iv as hardcode "aaa.."
-  set_value(iv, 16);
+  
   printf("Key:  %s, iv: %s\n", hex_2_string(key, 32), hex_2_string(iv, 16));
 
   EVP_CIPHER_CTX_init(e_ctx);
@@ -157,7 +151,7 @@ int main()
   unsigned char salt[] = {'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a', 0};
   unsigned char *key_data;
   int key_data_len, i;
-  char *input = "helleworldhelleworld";
+  char *input = "changeme";
 
   /* the key_data is read from the argument list */
   key_data = "qwerty";
