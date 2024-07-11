@@ -14,17 +14,17 @@
 #include <openssl/aes.h>
 
 unsigned char *hex_2_string(const unsigned char* hex, const unsigned int length) {
-    unsigned char * result=calloc(length*2+1, 1);
-    for (unsigned int i = 0; i < length; ++i) {
-	sprintf(result + i*2, "%02x", hex[i]);
-    }
-    return result;
+  unsigned char * result=calloc(length*2+1, 1);
+  for (unsigned int i = 0; i < length; ++i) {
+    sprintf(result + i*2, "%02x", hex[i]);
+  }
+  return result;
 }
 
 void set_value(char * ptr, int len) {
-        for (int i=0; i<len; i++) {
-                ptr[i] = 'a';
-        }
+  for (int i=0; i<len; i++) {
+    ptr[i] = 'a';
+  }
 }
 
 #define MAXBLOCKSIZE_PKCS7 128
@@ -35,25 +35,31 @@ int pkcs7_pad(char *buff, size_t blocksize, size_t startpoint) {
 
 	if((buff == NULL) || (blocksize > MAXBLOCKSIZE_PKCS7)) {
 		printf("invalid pad arg!\n");
-                return -1;
+    return -1;
 	}
 	padbyte = blocksize - startpoint % blocksize;
-	if(padbyte == 0) padbyte = blocksize;
 
-	for(i = 0; i < padbyte; i++) buff[startpoint + i] = padbyte;
+	if(padbyte == 0)
+    padbyte = blocksize;
+
+	for(i = 0; i < padbyte; i++) 
+    buff[startpoint + i] = padbyte;
+
 	return padbyte;
 }
 
 int pkcs7_unpad(char *buff, size_t blocksize, size_t buff_size) {
-        if(buff_size < blocksize || (buff == NULL) || (blocksize > MAXBLOCKSIZE_PKCS7)) {
-                printf("invalid unpad arg!\n");
-                return -1;
-        }
+  if(buff_size < blocksize || (buff == NULL) || (blocksize > MAXBLOCKSIZE_PKCS7)) {
+    printf("invalid unpad arg!\n");
+    return -1;
+  }
 
-        char pad = buff[buff_size-1];
-        for(int i = 0; i < pad; i++) buff[buff_size - 1 -i] = 0x0;
-        printf("pad = %d, buff = %s\n", pad, buff);
-        return pad;
+  char pad = buff[buff_size-1];
+  for(int i = 0; i < pad; i++) 
+    buff[buff_size - 1 -i] = 0x0;
+
+  printf("pad = %d, buff = %s\n", pad, buff);
+  return pad;
 }
 
 /**
@@ -135,13 +141,8 @@ unsigned char *aes_decrypt(EVP_CIPHER_CTX *e, unsigned char *ciphertext, int *le
   return plaintext;
 }
 
-int main(int argc, char **argv)
+int main()
 {
-
-  if (argc <= 1) {
-      printf("Please set key_data as argument!\n");
-      return -1;
-  }
   /* "opaque" encryption, decryption ctx structures that libcrypto uses to record
      status of enc/dec operations */
   EVP_CIPHER_CTX* en = EVP_CIPHER_CTX_new();
@@ -154,11 +155,11 @@ int main(int argc, char **argv)
   unsigned char salt[] = {'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a', 0};
   unsigned char *key_data;
   int key_data_len, i;
-  char *input[] = {"changeme", "test@user:pwddddddddddddddddd","0123456789abcde", "0123456789abcdef", NULL};
+  char *input = "changeme";
 
   /* the key_data is read from the argument list */
-  key_data = (unsigned char *)argv[1];
-  key_data_len = strlen(argv[1]);
+  key_data = "qwerty";
+  key_data_len = 6;
   
   /* gen key and iv. init the cipher ctx object */
   if (aes_init(key_data, key_data_len, (unsigned char *)&salt, en, de)) {
@@ -167,30 +168,28 @@ int main(int argc, char **argv)
   }
 
   /* encrypt and decrypt each input string and compare with the original */
-  for (i = 0; input[i]; i++) {
-    printf("input =%s, len = %d\n",input[i], strlen(input[i]));
-    char *plaintext;
-    unsigned char *ciphertext;
-    int olen, len;
+  printf("input =%s, len = %d\n",input, strlen(input));
+  char *plaintext;
+  unsigned char *ciphertext;
+  int olen, len;
 
-    /* The enc/dec functions deal with binary data and not C strings. strlen() will 
-       return length of the string without counting the '\0' string marker. We always
-       pass in the marker byte to the encrypt/decrypt functions so that after decryption 
-       we end up with a legal C string */
-    olen = len = strlen(input[i])+1;
-    
-    ciphertext = aes_encrypt(en, (unsigned char *)input[i], &len);
-    printf("OK: ciphertext: %s\n", hex_2_string(ciphertext, len));
-    plaintext = (char *)aes_decrypt(de, ciphertext, &len);
+  /* The enc/dec functions deal with binary data and not C strings. strlen() will 
+      return length of the string without counting the '\0' string marker. We always
+      pass in the marker byte to the encrypt/decrypt functions so that after decryption 
+      we end up with a legal C string */
+  olen = len = strlen(input)+1;
+  
+  ciphertext = aes_encrypt(en, (unsigned char *)input, &len);
+  printf("OK: ciphertext: %s\n", hex_2_string(ciphertext, len)); // 908d7f287f548a8c93e12e8204332862
+  plaintext = (char *)aes_decrypt(de, ciphertext, &len);
 
-    if (strncmp(plaintext, input[i], olen)) 
-      printf("FAIL: enc/dec failed for \"%s\", plaintext = \"%s\"\n", input[i], plaintext);
-    else 
-      printf("OK: enc/dec ok for \"%s\"\n", plaintext);
-    
-    free(ciphertext);
-    free(plaintext);
-  }
+  if (strncmp(plaintext, input, olen)) 
+    printf("FAIL: enc/dec failed for \"%s\", plaintext = \"%s\"\n", input, plaintext);
+  else 
+    printf("OK: enc/dec ok for \"%s\"\n", plaintext);
+  
+  free(ciphertext);
+  free(plaintext);
 
   EVP_CIPHER_CTX_free(en);
   EVP_CIPHER_CTX_free(de);
