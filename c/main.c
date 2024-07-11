@@ -106,7 +106,7 @@ unsigned char *aes_encrypt(EVP_CIPHER_CTX *e, unsigned char *plaintext, int *len
 
   /* update ciphertext, c_len is filled with the length of ciphertext generated,
     *len is the size of plaintext in bytes */
-  EVP_EncryptUpdate(e, ciphertext, &c_len, plaintext, *len);
+  EVP_EncryptUpdate(e, ciphertext, &c_len, plaintext, *len-1);
 
   printf("c_len = %d after encryption\n", c_len);
   /* update ciphertext with the final remaining bytes */
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
   unsigned char salt[] = {'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a', 0};
   unsigned char *key_data;
   int key_data_len, i;
-  char *input[] = {"hello", "test@user:pwddddddddddddddddd","0123456789abcde", "0123456789abcdef", NULL};
+  char *input[] = {"changeme", "test@user:pwddddddddddddddddd","0123456789abcde", "0123456789abcdef", NULL};
 
   /* the key_data is read from the argument list */
   key_data = (unsigned char *)argv[1];
@@ -168,6 +168,7 @@ int main(int argc, char **argv)
 
   /* encrypt and decrypt each input string and compare with the original */
   for (i = 0; input[i]; i++) {
+    printf("input =%s, len = %d\n",input[i], strlen(input[i]));
     char *plaintext;
     unsigned char *ciphertext;
     int olen, len;
@@ -176,7 +177,7 @@ int main(int argc, char **argv)
        return length of the string without counting the '\0' string marker. We always
        pass in the marker byte to the encrypt/decrypt functions so that after decryption 
        we end up with a legal C string */
-    olen = len = strlen(input[i]);
+    olen = len = strlen(input[i])+1;
     
     ciphertext = aes_encrypt(en, (unsigned char *)input[i], &len);
     printf("OK: ciphertext: %s\n", hex_2_string(ciphertext, len));
