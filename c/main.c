@@ -136,8 +136,10 @@ unsigned char *aes_decrypt(EVP_CIPHER_CTX *e, unsigned char *ciphertext, int *le
   EVP_DecryptUpdate(e, plaintext, &p_len, ciphertext, *len);
   EVP_DecryptFinal_ex(e, plaintext+p_len, &f_len);
 
-  pkcs7_unpad(plaintext, 16, *len);
+  printf("plaintext = %s 1111 %d\n", plaintext, strlen(plaintext));
+  // pkcs7_unpad(plaintext, 16, *len);
   *len = p_len + f_len;
+  printf("plaintext = %s 2222 %d\n", plaintext, strlen(plaintext));
   return plaintext;
 }
 
@@ -155,7 +157,7 @@ int main()
   unsigned char salt[] = {'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a', 0};
   unsigned char *key_data;
   int key_data_len, i;
-  char *input = "changeme";
+  char *input = "helleworldhelleworld";
 
   /* the key_data is read from the argument list */
   key_data = "qwerty";

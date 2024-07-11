@@ -40,6 +40,7 @@ func main() {
 	pkcs7 := pad.NewPKCS7(aes.BlockSize)
 	pad1 := pkcs7.Pad(plaintext)
 	fmt.Printf("pad1: %v\n", pad1)
+
 	blk := cipher.NewCBCEncrypter(block, salt)
 	blk.CryptBlocks(ciphertext, pad1)
 	blk = cipher.NewCBCDecrypter(block, salt)
