@@ -6,11 +6,8 @@ import (
 	"crypto/cipher"
 	"errors"
 
-	//"crypto/rand"
 	"crypto/sha256"
 	"fmt"
-
-	//"io"
 
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -42,43 +39,45 @@ func main() {
 	passwd := "qwerty"
 	size := 32
 
-	// pwsalt := getSalt(16) // 96 bits for nonce/IV
 	pwsalt := []byte{'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a'}
 	key := pbkdf2.Key([]byte(passwd), pwsalt, 14, size, sha256.New)
-	fmt.Printf("passwd %s, pwsalt %s,key: %v\n", passwd, pwsalt, key)
+	fmt.Printf("Password:\t%s\n", passwd)
+	fmt.Printf("Password Salt:\t%x\n", pwsalt)
+	fmt.Printf("Key:\t\t%x\n", key)
 
 	block, _ := aes.NewCipher(key)
 	fmt.Printf("block size: %d\n", block.BlockSize())
-	var plain []byte
+
+	var res []byte
+	var plaintext []byte
 	var ciphertext []byte
 
-	plaintext := []byte(msg)
+	plaintext = []byte(msg)
 
 	// Block cipher
-	plain = make([]byte, (len(plaintext)/16+1)*aes.BlockSize)
+	res = make([]byte, (len(plaintext)/16+1)*aes.BlockSize)
 	ciphertext = make([]byte, (len(plaintext)/16+1)*aes.BlockSize)
+
 	salt := []byte{'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a'}
 	fmt.Printf("salt: %v\n", salt)
-	// pkcs7 := pad.NewPKCS7(aes.BlockSize)
-	// pad1 := pkcs7.Pad(plaintext)
-	pad1 := pkcs7Padding(plaintext, aes.BlockSize)
-	fmt.Printf("pad1: %v\n", pad1)
+
+	padtext := pkcs7Padding(plaintext, aes.BlockSize)
+	fmt.Printf("padtext: %v\n", padtext)
 
 	blk := cipher.NewCBCEncrypter(block, salt)
-	blk.CryptBlocks(ciphertext, pad1)
-	blk = cipher.NewCBCDecrypter(block, salt)
-	blk.CryptBlocks(plain, ciphertext)
-	// plain, _ = pkcs7.Unpad(plain)
-	plain, _ = pkcs7Unpadding(plain)
+	blk.CryptBlocks(ciphertext, padtext)
 
-	fmt.Printf("Key size:\t%d bits\n", size*8)
+	blk = cipher.NewCBCDecrypter(block, salt)
+	blk.CryptBlocks(res, ciphertext)
+	fmt.Printf("res with pad: %v\n", res)
+
+	res, _ = pkcs7Unpadding(res)
+	fmt.Printf("res without pad: %v\n", res)
+
+	// fmt.Printf("Key size:\t%d bits\n", size*8)
 	fmt.Printf("Message:\t%s\n", msg)
 
-	fmt.Printf("Password:\t%s\n", passwd)
-	fmt.Printf("Password Salt:\t%x\n", pwsalt)
-	fmt.Printf("\nKey:\t\t%x\n", key)
 	fmt.Printf("\nCipher:\t\t%x\n", ciphertext) // 908d7f287f548a8c93e12e8204332862
 
-	fmt.Printf("Salt:\t\t%x\n", salt)
-	fmt.Printf("\nDecrypted:\t%s\n", plain)
+	fmt.Printf("\nDecrypted:\t%s\n", res)
 }
